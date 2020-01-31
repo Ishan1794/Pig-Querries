@@ -1,0 +1,106 @@
+Pig
+
+app = load '/user/hive/warehouse/h1b_final' using PigStorage() as (s_no:int, case_status:chararray, employer_name:chararray, soc_name:chararray, job_title:chararray, full_time_position:chararray,prevailing_wage:int,year:chararray,
+worksite:chararray, longitute:double, latitute:double);
+
+1 a) Is the number of petitions with Data Engineer job title increasing over time?
+
+
+filter1 = foreach app generate $1,$4,$7;
+dataeng = filter filter1 by job_title =='DATA ENGINEER';
+groupby = GROUP dataeng by year;																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																													filter2 = foreach groupby generate group,COUNT(dataeng.job_title);
+orderby = ORDER filter2 by $1 desc;
+
+
+
+
+4)Which top 5 employers file the most petitions each year?
+
+
+sel =foreach app generate employer_name,year;
+fil2011 = FILTER sel by year == '2011';
+grp2011 = group fil2011 by (employer_name,year);
+count2011 = foreach grp2011 generate group,COUNT(fil2011.$0) as ptn;
+odr2011 = ORDER count2011 by $1 desc;
+lim2011 = LIMIT odr2011 5;
+
+sel =foreach app generate employer_name,year;
+fil2012 = FILTER sel by year == '2012';
+grp2012 = group fil2012 by (employer_name,year);
+count2012 = foreach grp2012 generate group,COUNT(fil2012.$0) as ptn;
+odr2012 = ORDER count2012 by $1 desc;
+lim2012 = LIMIT odr2012 5;
+
+sel =foreach app generate employer_name,year;
+fil2013 = FILTER sel by year == '2013';
+grp2013 = group fil2013 by (employer_name,year);
+count2013 = foreach grp2013 generate group,COUNT(fil2013.$0) as ptn;
+odr2013 = ORDER count2013 by $1 desc;
+lim2013 = LIMIT odr2013 5;
+
+sel =foreach app generate employer_name,year;
+fil2014 = FILTER sel by year == '2014';
+grp2014 = group fil2014 by (employer_name,year);
+count2014 = foreach grp2014 generate group,COUNT(fil2014.$0) as ptn;
+odr2014 = ORDER count2014 by $1 desc;
+lim2014 = LIMIT odr2014 5;
+
+sel =foreach app generate employer_name,year;
+fil2015 = FILTER sel by year == '2015';
+grp2015 = group fil2015 by (employer_name,year);
+count2015 = foreach grp2015 generate group,COUNT(fil2015.$0) as ptn;
+odr2015 = ORDER count2015 by $1 desc;
+lim2015 = LIMIT odr2015 5;
+
+sel =foreach app generate employer_name,year;
+fil2016 = FILTER sel by year == '2016';
+grp2016 = group fil2016 by (employer_name,year);
+count2016 = foreach grp2016 generate group,COUNT(fil2016.$0) as ptn;
+odr2016 = ORDER count2016 by $1 desc;
+lim2016 = LIMIT odr2016 5;
+
+groupall = union lim2011,lim2012,lim2013,lim2014,lim2015,lim2016;
+dump groupall;
+
+
+
+6) Find the percentage and the count of each case status on total applications for each year. Create a graph depicting the pattern of All the cases over the period of time.
+
+
+filter1 = foreach app generate year,case_status;
+groupbyyear = GROUP filter1 by year;
+cunt = foreach groupbyyear generate $0,COUNT($1);
+
+totalgrup = group app ALL;
+A = foreach totalgrup generate COUNT(app.soc_name)as totalApp;
+
+
+
+B = foreach app generate year,case_status;
+groupbyyear1 = GROUP B by year;
+count = foreach groupbyyear1 generate $0,COUNT($1) as case_app;
+
+filter3 = foreach count generate $0,ROUND_TO(((case_app/(double)A.totalApp)*100),2);
+
+orderbycase = order filter3 by $1 desc;
+
+
+
+9) Which are  employers along with the number of petitions who have the success rate more than 70%  in petitions and total petitions filed more than 1000?
+
+
+
+grupall = group app ALL;
+totalpet = foreach grupall generate COUNT(app.soc_name)as totalapp;
+
+
+A = foreach app generate employer_name,case_status;
+suc = FILTER A by case_status == 'CERTIFIED' or case_status == 'CERTIFIED-WITHDRAWN';
+B = foreach suc generate employer_name,case_status;
+groupby = group B by employer_name;
+countofEmp = foreach groupby generate $0,COUNT(B.case_status) as ttlcerftified;
+
+sucrate = foreach countofEmp generate $0,(ttlcerftified/(double)totalpet.totalapp)*100;
+
+odr = order sucrate by $1 desc;
+lim = LIMIT odr 10;
